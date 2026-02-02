@@ -1,44 +1,51 @@
-# Deployment Instructions
+# Deployment Guide
 
-## Step 1: Create Telegram Bot
+## Vercel (Recommended - Serverless)
 
-1. Open Telegram, search for [@BotFather](https://t.me/BotFather)
-2. Send `/newbot`
-3. Choose a name: `Claire's Wordle` (or anything)
-4. Choose a username: Must end in `bot`, e.g. `clairewordle_bot`
-5. Copy the token (looks like `123456:ABC-DEF...`)
+The bot is currently deployed on Vercel using webhook mode.
 
-## Step 2: Deploy to Railway
+### Quick Deploy
 
-### Option A: Railway Dashboard (Easiest)
+1. Fork or clone the repo
+2. Run `npx vercel --prod --yes`
+3. Add BOT_TOKEN: `npx vercel env add BOT_TOKEN production`
+4. Redeploy: `npx vercel --prod --yes`
+5. Set webhook: `curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://your-app.vercel.app/api/webhook"`
 
-1. Go to [railway.app](https://railway.app)
-2. Click "New Project" → "Deploy from GitHub repo"
-3. Select `skyblue-will/claire-wordle-bot`
-4. Add environment variable:
-   - `BOT_TOKEN` = your token from BotFather
-5. Click Deploy!
-
-### Option B: Railway CLI
+### Verify Deployment
 
 ```bash
-cd /home/clawdbot/repos/claire-wordle-bot
-railway login
-railway init
-railway up
-railway variables set BOT_TOKEN=your_token_here
+# Check webhook status
+curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
+
+# Check endpoint is live
+curl "https://your-app.vercel.app/api/webhook"
 ```
 
-## Step 3: Test It!
+### Adding Persistence (Optional)
 
-Open your bot in Telegram and send `/start`
+For user data to persist between function invocations:
 
-## Troubleshooting
+1. Create free Upstash Redis database at https://upstash.com
+2. Add environment variables:
+   - `UPSTASH_REST_URL`
+   - `UPSTASH_REST_TOKEN`
+3. Redeploy
 
-- Check logs: `railway logs` or Railway dashboard
-- Make sure BOT_TOKEN is set correctly
-- Redeploy if needed: `railway up`
+## Railway (Alternative - Always-on)
 
----
+Use the original `bot.py` with polling mode:
 
-Bot URL: https://t.me/YOUR_BOT_USERNAME
+```bash
+railway init
+railway add --database postgresql  # if needed
+railway variables set BOT_TOKEN=your_token
+railway up
+```
+
+## Local Development
+
+```bash
+export BOT_TOKEN=your_token
+python bot.py  # Uses polling mode
+```
