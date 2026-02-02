@@ -9,7 +9,6 @@ import random
 import hashlib
 import requests
 from datetime import datetime, timezone
-from http.server import BaseHTTPRequestHandler
 
 # ============ CONFIG ============
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
@@ -637,28 +636,25 @@ def handle_guess(chat_id, user, text):
             f"```\n{keyboard}\n```"
         )
 
-# ============ MAIN HANDLER ============
-class handler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        content_length = int(self.headers.get('Content-Length', 0))
-        body = self.rfile.read(content_length)
-        
-        try:
-            update = json.loads(body)
-            process_update(update)
-        except Exception as e:
-            print(f"Error processing update: {e}")
-        
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/json')
-        self.end_headers()
-        self.wfile.write(b'{"ok": true}')
-    
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/json')
-        self.end_headers()
-        self.wfile.write(b'{"status": "Claire\'s Wordle Bot is running!"}')
+# ============ FLASK APP ============
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route('/', methods=['GET'])
+@app.route('/api/webhook', methods=['GET'])
+def health():
+    return jsonify({"status": "Claire's Wordle Bot is running!"})
+
+@app.route('/', methods=['POST'])
+@app.route('/api/webhook', methods=['POST'])
+def webhook():
+    try:
+        update = request.get_json(force=True)
+        process_update(update)
+    except Exception as e:
+        print(f"Error processing update: {e}")
+    return jsonify({"ok": True})
 
 def process_update(update):
     """Process a Telegram update"""
